@@ -1,25 +1,37 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-const scoreElement = document.getElementById("score");
-
 canvas.width = 800;
 canvas.height = 400;
 
-let score = 0;
+const player = new Player();
+let enemies = [];
+let frames = 0;
 
-function update() {
-    // Aqui limparemos a tela e desenharemos o jogo
+function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Desenha um chão simples
-    ctx.fillStyle = "#555";
-    ctx.fillRect(0, 350, canvas.width, 50);
+    // Desenha o jogador
+    player.draw(ctx);
 
-    // Placeholder para o jogador (que estaria em player.js)
-    ctx.fillStyle = "lime";
-    ctx.fillRect(50, 300, 50, 50);
+    // Cria novos meteoros a cada 60 frames (aprox. 1 segundo)
+    if (frames % 60 === 0) {
+        enemies.push(new Enemy());
+    }
 
-    requestAnimationFrame(update);
+    // Atualiza e desenha cada meteoro
+    enemies.forEach((enemy, index) => {
+        enemy.update();
+        enemy.draw(ctx);
+
+        // Remove meteoros que saíram da tela para não pesar o jogo
+        if (enemy.x + enemy.w < 0) {
+            enemies.splice(index, 1);
+        }
+    });
+
+    frames++;
+    requestAnimationFrame(gameLoop);
 }
 
-update();
+window.addEventListener("keydown", (e) => player.move(e.key));
+gameLoop();
