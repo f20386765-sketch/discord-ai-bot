@@ -1,31 +1,35 @@
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-canvas.width = 800;
-canvas.height = 400;
+let bullets = [];
 
-const player = new Player();
-let enemies = [];
-let frames = 0;
-
+// ... dentro do gameLoop ...
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Desenha o jogador
     player.draw(ctx);
 
-    // Cria novos meteoros a cada 60 frames (aprox. 1 segundo)
-    if (frames % 60 === 0) {
-        enemies.push(new Enemy());
-    }
+    // Gerenciar Balas
+    bullets.forEach((bullet, bIndex) => {
+        bullet.update();
+        bullet.draw(ctx);
+        if (bullet.x > canvas.width) bullets.splice(bIndex, 1);
+    });
 
-    // Atualiza e desenha cada meteoro
-    enemies.forEach((enemy, index) => {
+    // Gerenciar Inimigos e Colisões com Balas
+    enemies.forEach((enemy, eIndex) => {
         enemy.update();
         enemy.draw(ctx);
 
-        // Remove meteoros que saíram da tela para não pesar o jogo
-        if (enemy.x + enemy.w < 0) {
-            enemies.splice(index, 1);
+        // Colisão Bala vs Meteoro
+        bullets.forEach((bullet, bIndex) => {
+            if (checkCollision(bullet, enemy)) {
+                sounds.explosion.play(); // Toca som de explosão
+                enemies.splice(eIndex, 1);
+                bullets.splice(bIndex, 1);
+            }
+        });
+
+        // Colisão Jogador vs Meteoro
+        if (checkCollision(player, enemy)) {
+            alert("FIM DE JOGO!");
+            document.location.reload();
         }
     });
 
@@ -33,5 +37,11 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-window.addEventListener("keydown", (e) => player.move(e.key));
-gameLoop();
+// Evento para Atirar
+window.addEventListener("keydown", (e) => {
+    player.move(e.key);
+    if (e.code === "Space") {
+        bullets.push(new Bullet(player.x, player.y));
+        sounds.laser.play(); // Toca som de laser
+    }
+});
